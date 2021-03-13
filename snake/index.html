@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>snake</title>
+    <style>
+        .header-container {
+            display: grid;
+            grid-template-columns: 1fr 80px 80px 80px 1fr;
+            grid-template-rows: auto;
+            place-items: center;
+            gap: 10px 10px;
+        }
+
+        .body-container {
+            display: grid;
+            grid-template-columns: auto 700px auto;
+            grid-template-rows: 700px;
+            place-items: center;
+        }
+
+        .play-container {
+            grid-column: 2/3;
+            height: 600px;
+            width: 600px;
+            display: grid;
+            grid-template-columns: repeat(60, 10px);
+            grid-template-rows: repeat(60, 10px);
+            gap: 1px 1px;
+            place-items: stretch;
+        }
+
+        .map {
+            background-color: yellow;
+        }
+
+        .snake {
+            background-color: blue;
+        }
+
+        .snake-head {
+            background-color: black;
+        }
+
+        .candy {
+            background-color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-container">
+        <p></p>
+        <button onclick="start()">Start</button>
+        <button onclick="stop()">Stop</button>
+        <button onclick="reset()">Reset</button>
+        <p></p>
+    </div>
+    <div class="body-container">
+        <div class="play-container"></div>
+    </div>
+</body>
+<script>
+    const play = document.querySelectorAll('.play-container')[0];
+    for (let i = 0; i < 60; i++) {
+        for (let j = 0; j < 60; j++) {
+            const div = document.createElement('div');
+            div.className = 'map';
+            div.style.width = '10px';
+            div.style.height = '10px';
+            play.appendChild(div);
+        }
+    }
+    const map = document.querySelectorAll('.map');
+
+    class Point {
+        constructor(x, y) {
+            [this.x, this.y] = [x, y]
+        }
+    }
+
+    const arrow = {
+        ArrowRight: new Point(0, 1),
+        ArrowLeft: new Point(0, -1),
+        ArrowUp: new Point(-1, 0),
+        ArrowDown: new Point(1, 0),
+    }
+
+    class Snake {
+        constructor() {
+            this.clear();
+        }
+        speed(n) { this.sp = n; }
+        direction(direct) { this.directNext = direct; }
+        clear() { this.body = []; }
+        list() { return this.body; }
+        add(point) { this.body.push(point); }
+        move(point) {
+            this.direct = this.directNext;
+            const d = arrow[this.direct];
+            const next = new Point(this.body[0].x + d.x, this.body[0].y + d.y);
+            if (next.x < 0 || next.x > 59 || next.y < 0 || next.y > 59) {
+                alert('game over');
+                snake.stop();
+                return;
+            }
+            const nextPoint = map[next.x * 60 + next.y];
+            let eat = false;
+            console.log(nextPoint.className);
+            switch (nextPoint.className) {
+                case 'candy':
+                    this.generateCandy();
+                    this.speed(--this.sp);
+                    this.stop();
+                    this.start();
+                    eat = true;
+                    break;
+                case 'snake':
+                    alert('game over');
+                    snake.stop();
+                    return;
+            }
+            for (const p of this.body) {
+                map[p.x * 60 + p.y].className = 'map';
+            }
+            if (!eat) {
+                this.body.pop();
+            }
+            nextPoint.className = 'snake-head';
+            this.body.unshift(next);
+            for (const p of this.body.slice(1)) {
+                map[p.x * 60 + p.y].className = 'snake';
+            }
+        }
+        generateCandy = () => {
+            const o = Math.floor(Math.random() * 3600);
+            if (map[o].className !== 'map') {
+                return this.generateCandy()
+            }
+            map[o].className = 'candy';
+        }
+        start = () => {
+            this.run = setInterval(() => {
+                this.move()
+            }, this.sp);
+        }
+        stop = () => {
+            clearInterval(this.run);
+        }
+    }
+
+    const snake = new Snake();
+    document.body.onkeydown = () => {
+        switch (event.code) {
+            case 'ArrowRight':
+                if (snake.direct === 'ArrowLeft') {
+                    return
+                }
+                snake.direction(event.code);
+            case 'ArrowLeft':
+                if (snake.direct === 'ArrowRight') {
+                    return
+                }
+                snake.direction(event.code);
+            case 'ArrowUp':
+                if (snake.direct === 'ArrowDown') {
+                    return
+                }
+                snake.direction(event.code);
+            case 'ArrowDown':
+                if (snake.direct === 'ArrowUp') {
+                    return
+                }
+                snake.direction(event.code);
+        }
+    }
+
+    function reset() {
+        for (const m of map) {
+            m.className = 'map';
+        }
+        snake.clear();
+        snake.direction('ArrowDown');
+        for (let i = 0; i < 10; i++) {
+            const p = new Point(Math.floor(i / 50), i % 50);
+            snake.body.unshift(p);
+        }
+        snake.speed(100);
+        snake.generateCandy();
+        snake.generateCandy();
+        snake.generateCandy();
+        snake.generateCandy();
+        snake.generateCandy();
+        snake.start();
+    }
+    function start() {
+        snake.start();
+    }
+    function stop() {
+        snake.stop();
+    }
+
+</script>
+
+</html>
